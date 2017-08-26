@@ -66,6 +66,8 @@ double R_Zero, R_PosInf, R_NegInf, R_Nan;
 /*================================= Globals ================================= */
 
 /* Global vars */
+
+/* 服务器变量的全局实例 */
 struct redisServer server; /* server global state */
 
 /* Our command table.
@@ -303,6 +305,7 @@ void redisLogRaw(int level, const char *msg) {
     level &= 0xff; /* clear flags */
     if (level < server.verbosity) return;
 
+    /* 如果日志不输出到文件，则输出到控制终端 */
     fp = log_to_stdout ? stdout : fopen(server.logfile,"a");
     if (!fp) return;
 
@@ -1394,6 +1397,8 @@ void createSharedObjects(void) {
     shared.maxstring = createStringObject("maxstring",9);
 }
 
+
+/* 初始化服务器配置，服务器的配置基本都是默认值 */
 void initServerConfig(void) {
     int j;
 
@@ -1665,6 +1670,7 @@ void checkTcpBacklogSettings(void) {
  * impossible to bind, or no bind addresses were specified in the server
  * configuration but the function is not able to bind * for at least
  * one of the IPv4 or IPv6 protocols. */
+/* 开启服务器监听套接字 */
 int listenToPort(int port, int *fds, int *count) {
     int j;
 
@@ -1745,6 +1751,7 @@ void resetServerStats(void) {
 void initServer(void) {
     int j;
 
+    /* 设置进程忽略的信号 */
     signal(SIGHUP, SIG_IGN);
     signal(SIGPIPE, SIG_IGN);
     setupSignalHandlers();
@@ -3375,6 +3382,9 @@ void linuxMemoryWarnings(void) {
 }
 #endif /* __linux__ */
 
+/* 穿件进程文件，如果是僵尸 进程则创建，否则不创建
+ * 其实就是讲进程id写入到文件到当中 
+ */
 void createPidFile(void) {
     /* Try to write the pid file in a best-effort way. */
     FILE *fp = fopen(server.pidfile,"w");
@@ -3384,6 +3394,7 @@ void createPidFile(void) {
     }
 }
 
+/* 设置redis为僵尸进程模式运行 */
 void daemonize(void) {
     int fd;
 
@@ -3462,6 +3473,7 @@ void redisAsciiArt(void) {
     zfree(buf);
 }
 
+/* 关闭信号的处理句柄 */
 static void sigShutdownHandler(int sig) {
     char *msg;
 
@@ -3492,6 +3504,7 @@ static void sigShutdownHandler(int sig) {
     server.shutdown_asap = 1;
 }
 
+/* 设置进程的信号处理句柄 */
 void setupSignalHandlers(void) {
     struct sigaction act;
 
@@ -3545,12 +3558,14 @@ void loadDataFromDisk(void) {
     }
 }
 
+/* redis内存溢出处理函数 */
 void redisOutOfMemoryHandler(size_t allocation_size) {
     redisLog(REDIS_WARNING,"Out Of Memory allocating %zu bytes!",
         allocation_size);
     redisPanic("Redis aborting for OUT OF MEMORY");
 }
 
+/* 设置进程的title */
 void redisSetProcTitle(char *title) {
 #ifdef USE_SETPROCTITLE
     char *server_mode = "";
@@ -3567,6 +3582,8 @@ void redisSetProcTitle(char *title) {
 #endif
 }
 
+
+/* redis的入口函数 */
 int main(int argc, char **argv) {
     struct timeval tv;
 
@@ -3649,6 +3666,7 @@ int main(int argc, char **argv) {
     if (server.daemonize) daemonize();
     initServer();
     if (server.daemonize) createPidFile();
+    /* 设置进程的title为第一个参数 */
     redisSetProcTitle(argv[0]);
     redisAsciiArt();
 

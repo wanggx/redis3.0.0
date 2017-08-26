@@ -72,6 +72,7 @@ typedef long long mstime_t; /* millisecond time type. */
 #define REDIS_MIN_HZ            1
 #define REDIS_MAX_HZ            500
 #define REDIS_SERVERPORT        6379    /* TCP port */
+/* 监听套接字的等待队列长度 */
 #define REDIS_TCP_BACKLOG       511     /* TCP listen backlog */
 #define REDIS_MAXIDLETIME       0       /* default client timeout: infinite */
 #define REDIS_DEFAULT_DBNUM     16
@@ -450,8 +451,11 @@ struct evictionPoolEntry {
 /* Redis database representation. There are multiple databases identified
  * by integers from 0 (the default database) up to the max configured
  * database. The database number is the 'id' field in the structure. */
+/* 数据库结构 */
 typedef struct redisDb {
+    /* 键值对字典 */
     dict *dict;                 /* The keyspace for this DB */
+    /* 过期键值对字典 */
     dict *expires;              /* Timeout of keys with a timeout set */
     dict *blocking_keys;        /* Keys with clients waiting for data (BLPOP) */
     dict *ready_keys;           /* Blocked keys that received a PUSH */
@@ -645,14 +649,17 @@ struct clusterState;
 #undef hz
 #endif
 
+/* redis服务结构 */
 struct redisServer {
     /* General */
     pid_t pid;                  /* Main process pid. */
     char *configfile;           /* Absolute config file path, or NULL */
     int hz;                     /* serverCron() calls frequency in hertz */
+    /* redis当中默认的数据库个数为16个，该指针指向数据库的数组 */
     redisDb *db;
     dict *commands;             /* Command table */
     dict *orig_commands;        /* Command table before command renaming. */
+    /* 服务器的时间回环结构 */
     aeEventLoop *el;
     unsigned lruclock:REDIS_LRU_BITS; /* Clock for LRU eviction */
     int shutdown_asap;          /* SHUTDOWN needed ASAP */
@@ -662,8 +669,10 @@ struct redisServer {
     int arch_bits;              /* 32 or 64 depending on sizeof(long) */
     int cronloops;              /* Number of times the cron function run */
     char runid[REDIS_RUN_ID_SIZE+1];  /* ID always different at every exec. */
+    /* 标记服务器实例的哨兵模式 */
     int sentinel_mode;          /* True if this instance is a Sentinel. */
     /* Networking */
+    /* 监听套接口 */
     int port;                   /* TCP listening port */
     int tcp_backlog;            /* TCP listen() backlog */
     char *bindaddr[REDIS_BINDADDR_MAX]; /* Addresses we should bind to */
@@ -724,12 +733,15 @@ struct redisServer {
         int idx;
     } inst_metric[REDIS_METRIC_COUNT];
     /* Configuration */
+    /* 服务器的日志级别 */
     int verbosity;                  /* Loglevel in redis.conf */
     int maxidletime;                /* Client timeout in seconds */
     int tcpkeepalive;               /* Set SO_KEEPALIVE if non-zero. */
     int active_expire_enabled;      /* Can be disabled for testing purposes. */
     size_t client_max_querybuf_len; /* Limit for client query buffer length */
+    /* redis数据库数量 */
     int dbnum;                      /* Total number of configured DBs */
+    /* 是否已僵尸进程模式运行 */
     int daemonize;                  /* True if running as a daemon */
     clientBufferLimitsConfig client_obuf_limits[REDIS_CLIENT_TYPE_COUNT];
     /* AOF persistence */
@@ -788,7 +800,9 @@ struct redisServer {
     /* Propagation of commands in AOF / replication */
     redisOpArray also_propagate;    /* Additional command to propagate. */
     /* Logging */
+    /* 日志输出文件路径 */
     char *logfile;                  /* Path of log file */
+    /* 是否输出系统日志 */
     int syslog_enabled;             /* Is syslog enabled? */
     char *syslog_ident;             /* Syslog ident */
     int syslog_facility;            /* Syslog facility */
@@ -873,6 +887,7 @@ struct redisServer {
     int notify_keyspace_events; /* Events to propagate via Pub/Sub. This is an
                                    xor of REDIS_NOTIFY... flags. */
     /* Cluster */
+    /* 是否已集群模式工作 */
     int cluster_enabled;      /* Is cluster enabled? */
     mstime_t cluster_node_timeout; /* Cluster node timeout. */
     char *cluster_configfile; /* Cluster auto-generated config file name. */

@@ -48,6 +48,9 @@
  * You can print the string with printf() as there is an implicit \0 at the
  * end of the string. However the string is binary safe and can contain
  * \0 characters in the middle, as the length is stored in the sds header. */
+/* 使用init指向的数据来初始化一个长度为initlen的字符串，
+ * 字符串中的free字段为0
+ */
 sds sdsnewlen(const void *init, size_t initlen) {
     struct sdshdr *sh;
 
@@ -58,6 +61,7 @@ sds sdsnewlen(const void *init, size_t initlen) {
     }
     if (sh == NULL) return NULL;
     sh->len = initlen;
+    /* 注意free设置为0，就是不申请多余的空闲空间 */
     sh->free = 0;
     if (initlen && init)
         memcpy(sh->buf, init, initlen);
@@ -72,12 +76,15 @@ sds sdsempty(void) {
 }
 
 /* Create a new sds string starting from a null termined C string. */
+
+/* 使用init指向的数据来初始化一个字符串 */
 sds sdsnew(const char *init) {
     size_t initlen = (init == NULL) ? 0 : strlen(init);
     return sdsnewlen(init, initlen);
 }
 
 /* Duplicate an sds string. */
+/* 拷贝一个字符串 */
 sds sdsdup(const sds s) {
     return sdsnewlen(s, sdslen(s));
 }
@@ -102,6 +109,7 @@ void sdsfree(sds s) {
  * The output will be "2", but if we comment out the call to sdsupdatelen()
  * the output will be "6" as the string was modified but the logical length
  * remains 6 bytes. */
+/* 更新sda的实际实际使用长度 */
 void sdsupdatelen(sds s) {
     struct sdshdr *sh = (void*) (s-(sizeof(struct sdshdr)));
     int reallen = strlen(s);
@@ -113,6 +121,7 @@ void sdsupdatelen(sds s) {
  * However all the existing buffer is not discarded but set as free space
  * so that next append operations will not require allocations up to the
  * number of bytes previously available. */
+/* 清楚sds当中的数据 */
 void sdsclear(sds s) {
     struct sdshdr *sh = (void*) (s-(sizeof(struct sdshdr)));
     sh->free += sh->len;
@@ -152,6 +161,7 @@ sds sdsMakeRoomFor(sds s, size_t addlen) {
  *
  * After the call, the passed sds string is no longer valid and all the
  * references must be substituted with the new pointer returned by the call. */
+/* 剔除掉字符串的空闲空间 */
 sds sdsRemoveFreeSpace(sds s) {
     struct sdshdr *sh;
 
@@ -168,6 +178,7 @@ sds sdsRemoveFreeSpace(sds s) {
  * 3) The free buffer at the end if any.
  * 4) The implicit null term.
  */
+/* 获取sds实际分配的内存空间 */
 size_t sdsAllocSize(sds s) {
     struct sdshdr *sh = (void*) (s-(sizeof(struct sdshdr)));
 
@@ -197,6 +208,7 @@ size_t sdsAllocSize(sds s) {
  * ... check for nread <= 0 and handle it ...
  * sdsIncrLen(s, nread);
  */
+/* 增加sds实际使用的空间 */
 void sdsIncrLen(sds s, int incr) {
     struct sdshdr *sh = (void*) (s-(sizeof(struct sdshdr)));
 

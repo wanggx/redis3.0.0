@@ -802,6 +802,7 @@ int memtest_test_linux_anonymous_maps(void) {
 }
 #endif
 
+/* 段错误信号的处理句柄 */
 void sigsegvHandler(int sig, siginfo_t *info, void *secret) {
     ucontext_t *uc = (ucontext_t*) secret;
     sds infostring, clients;

@@ -31,6 +31,7 @@
 #ifndef __SDS_H
 #define __SDS_H
 
+/* sds字符串的预分配长度限制 */
 #define SDS_MAX_PREALLOC (1024*1024)
 
 #include <sys/types.h>
@@ -38,17 +39,20 @@
 
 typedef char *sds;
 
+/* len+free是字符串实际分配的内存长度 */
 struct sdshdr {
-    unsigned int len;
+    unsigned int len;    /* 字符串实际使用的长度 */
     unsigned int free;
     char buf[];
 };
 
+/* 获取字符串长度 */
 static inline size_t sdslen(const sds s) {
     struct sdshdr *sh = (void*)(s-(sizeof(struct sdshdr)));
     return sh->len;
 }
 
+/* 字符串可用长度 */
 static inline size_t sdsavail(const sds s) {
     struct sdshdr *sh = (void*)(s-(sizeof(struct sdshdr)));
     return sh->free;
